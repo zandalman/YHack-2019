@@ -1,7 +1,9 @@
 import googlemaps
 from datetime import datetime
 
-gmaps = googlemaps.Client(key=)
+f = open("key.txt","r")
+key = f.readlines()[0]
+gmaps = googlemaps.Client(key=key)
 
 now=datetime.now()
 directions_result = gmaps.directions("37.2753,-107.880067",
