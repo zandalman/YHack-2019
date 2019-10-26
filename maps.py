@@ -103,8 +103,8 @@ n = len(places)
 start_pos = "37,-121"
 time_limit = 150000
 
-names = []
-types = []
+names = ["Jade", "Phoenix", "Sumedha"]
+types = ["Ben", "Zack", "Abhijit"]
 
 def get_path(n, places, ratings, names, types, start_pos, time_limit):
     places.append(start_pos)
@@ -114,7 +114,10 @@ def get_path(n, places, ratings, names, types, start_pos, time_limit):
     good = find_route(n, matrix, time_limit)
     best_route = best(good, ratings)
 
-    print(best_route)
-    print(value(best_route, ratings))
+    print("Itinerary")
+    for i in range(len(best_route)):
+        if(best_route[i]!=len(names)):
+            print(types[best_route[i]]+"\t"+names[best_route[i]])
+
 
 get_path(n, places, ratings, names, types, start_pos, time_limit)
