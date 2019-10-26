@@ -11,22 +11,16 @@ key = f.readlines()[0]
 gmaps = googlemaps.Client(key=key)
 
 now=datetime.now()
-directions_result = gmaps.directions("37.2753,-107.880067",
-                                     "37.7749,-122.419416",
-                                     mode="driving",
-                                     avoid="ferries",
-                                     departure_time=now)
-
-print(directions_result[0]['legs'][0]['distance']['text'])
-print(directions_result[0]['legs'][0]['duration']['text'])
 
 place1 = "37.2753,-107.88067"
 place2 = "37.7749,-122.419416"
 place3 = "43.123, -110.1245"
 places = [place1, place2, place3]
+ratings = [4.5, 3.4, 2.9]
+
 n = len(places)
 
-time_limit = 105067
+time_limit = 106000
 
 gmaps_matrix = gmaps.distance_matrix(places, places,
                     mode="driving",
@@ -71,12 +65,31 @@ for i in range(1, 2**n):
         fitness_dists = mlrose.TravellingSales(distances=dist_list)
         problem_fit = mlrose.TSPOpt(length=len(iArr), fitness_fn=fitness_dists, maximize=False)
         best_state, best_fitness = mlrose.genetic_alg(problem_fit, random_state=2)
+
         best_state_fr = []
         for k in range(len(iArr)):
             best_state_fr.append(iArr[best_state[k]])
-        print("The best state found is ", best_state_fr)
-        print("The fitness at the best state is", best_fitness)
+
         if(best_fitness<time_limit):
             good.append(best_state_fr)
 
-print(good)
+def value(path):
+    n = len(path)
+    sum = 0
+    for i in range(n):
+        sum+=ratings[path[i]]
+    return sum/n**(0.5)
+
+values = []
+for i in range(len(good)):
+    values.append(value(good[i]))
+
+max = 0
+loc = -1
+
+for i in range(len(good)):
+    if(values[i]>max):
+        max = values[i]
+        loc = i
+
+print(good[i])
