@@ -2,8 +2,24 @@ import requests
 import re
 from bs4 import BeautifulSoup
 from google_images_download import google_images_download   #importing the library
+from IPython.display import Image
 import googlemaps
+from datetime import datetime
+import numpy as np
 
+#Get API key
+KEY_file = open('key.txt', 'r')
+KEY=KEY_file.readlines()[0]
+
+#List types of places that are interesting
+good_types = ['amusement_park', 'aquarium', 'art_gallery', 'bakery', 'bar',
+    'bicycle_store', 'book_store', 'bowling_alley', 'cafe', 'campground',
+    'casino', 'cemetery', 'church', 'city_hall', 'courthouse',
+    'embassy', 'florist', 'hindu_temple', 'jewelry_store', 'library', 'light_rail_station',
+    'mosque', 'movie_theater', 'museum', 'night_club', 'park', 'restaurant',
+    'spa', 'stadium', 'synagogue', 'tourist_attraction', 'zoo']
+
+#Define a Google search object
 class Gsearch_python:
 
     def __init__(self, name_search):
@@ -23,6 +39,7 @@ class Gsearch_python:
             results.append(i)
         return results
 
+#Get a list of places in a city from TripAdvisor
 def places(city):
 
     gs = Gsearch_python("Tripadvisor %s" % (city))
@@ -36,8 +53,6 @@ def places(city):
     URL = res[i]
     r = requests.get(URL)
 
-    from bs4 import BeautifulSoup
-
     soup = BeautifulSoup(r.content, 'html5lib')
 
     places = []
@@ -47,31 +62,43 @@ def places(city):
 
     return places
 
-def pic(city, place):
-
-    response = google_images_download.googleimagesdownload()   #class instantiation
-
-    arguments = {"keywords":"%s %s" % (city, place),"limit":1,"print_urls":True}   #creating list of arguments
-    paths = response.download(arguments)   #passing the arguments to the function
-    Image(filename=paths[0][city + ' ' + place][0])    #printing absolute paths of the downloaded images
-
+#Return latitude, longitude, and rating for a given location
 def info(place):
 
-    gmaps = googlemaps.Client(key='AIzaSyCp1XU9QMczMh_iDm8hEKrWjYu4ZY2ki5k')
+    gmaps = googlemaps.Client(key=KEY)
 
     geocode_result = gmaps.geocode(place)
     place_id = geocode_result[0]['place_id']
 
-    URL2 = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=name,rating,photos,url&key=AIzaSyCp1XU9QMczMh_iDm8hEKrWjYu4ZY2ki5k'% place_id
+    URL2 = 'https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=name,rating,photos,type&key=%s'% (place_id, KEY)
     r2 = requests.get(URL2)
     soup2 = BeautifulSoup(r.content, 'html5lib')
     res2 = json.loads(r2.text)
 
-    lat = geocode_result[0]['geometry']['location']['lat']
-    long = geocode_result[0]['geometry']['location']['lng']
-    try:
-        rating = res2['result']['rating']
-    except:
-        rating = 2.5
+    if not set(res2['result']['types']).isdisjoint(good_types):
 
-    return lat, long, rating
+        lat = geocode_result[0]['geometry']['location']['lat']
+        long = geocode_result[0]['geometry']['location']['lng']
+        try:
+            rating = float('%.3g' % str(res2['result']['rating']))
+        except:
+            rating = 4.5
+
+        return lat, long, rating
+
+#Return a dictionary of interesting locations in a place with latitude, longitude, and rating
+def place_data(place):
+
+    loc = places(place)
+
+    data = {}
+
+    for i in range(len(loc)):
+
+        place_info = info(place + loc[i])
+
+        if (place_info != None) and (place_info not in data.values()):
+
+            data[loc[i]] = place_info
+
+    return data
