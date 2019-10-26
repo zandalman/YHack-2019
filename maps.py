@@ -40,8 +40,8 @@ def binary(n, digits):
 
 def find_route(n, matrix, time_limit):
     good = []
-    for i in range(1, 2**n):
-        bin = binary(i, n)
+    for i in range(1, 2**(n-1)):
+        bin = binary(i, n-1)+"1"
         iArr = []
         posArr = []
         for j in range(n):
@@ -73,7 +73,8 @@ def value(path, ratings):
     n = len(path)
     sum = 0
     for i in range(n):
-        sum+=ratings[path[i]]
+        if(path[i]!=len(ratings)):
+            sum+=ratings[path[i]]
     return sum/n**(0.5)
 
 def best(good, ratings):
@@ -91,24 +92,29 @@ def best(good, ratings):
 
     return good[i]
 
-place1 = "37.2753,-107.88067"
-place2 = "37.7749,-122.419416"
-place3 = "43.123,-110.1245"
-places = [place1, place2, place3]
+place0 = "37.2753,-107.88067"
+place1 = "37.7749,-122.419416"
+place2 = "43.123,-110.1245"
+places = [place0, place1, place2]
 ratings = [4.5, 3.4, 2.9]
 
 n = len(places)
 
-time_limit = 106000
+start_pos = "37,-121"
+time_limit = 150000
 
 names = []
 types = []
 
+def get_path(n, places, ratings, names, types, start_pos, time_limit):
+    places.append(start_pos)
+    n+=1
 
-def get_path(n, places, ratings, names, types, time_limit):
     matrix = google(n, places)
     good = find_route(n, matrix, time_limit)
     best_route = best(good, ratings)
-    print(best_route)
 
-get_path(n, places, ratings, names, types, time_limit)
+    print(best_route)
+    print(value(best_route, ratings))
+
+get_path(n, places, ratings, names, types, start_pos, time_limit)
