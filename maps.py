@@ -10,10 +10,8 @@ f = open("key.txt","r")
 key = f.readlines()[0]
 gmaps = googlemaps.Client(key=key)
 
-now=datetime.now()
-
-def google(n, places):
-    gmaps_matrix = gmaps.distance_matrix(places, places,
+def google(n, locations):
+    gmaps_matrix = gmaps.distance_matrix(locations, locations,
                         mode="driving",
                         avoid="ferries",
                         departure_time=now)
@@ -44,10 +42,10 @@ def find_route(n, matrix, time_limit):
         bin = binary(i, n-1)+"1"
         iArr = []
         posArr = []
-        for j in range(n):
+        for j in range(n - 1):
             if(bin[j]=='1'):
                 iArr.append(j)
-                posArr.append(places[j])
+                posArr.append(locations[j])
 
         if(len(iArr)>1):
             new_mat = getMat(iArr, matrix)
@@ -74,7 +72,7 @@ def value(path, ratings):
     sum = 0
     for i in range(n):
         if(path[i]!=len(ratings)):
-            sum+=ratings[path[i]]
+            sum+=float(ratings[path[i]])
     return sum/n**(0.5)
 
 def best(good, ratings):
@@ -92,32 +90,27 @@ def best(good, ratings):
 
     return good[i]
 
-place0 = "37.2753,-107.88067"
-place1 = "37.7749,-122.419416"
-place2 = "43.123,-110.1245"
-places = [place0, place1, place2]
-ratings = [4.5, 3.4, 2.9]
+n = len(locations)
 
-n = len(places)
+time_limit = 3600
 
-start_pos = "37,-121"
-time_limit = 150000
-
-names = ["Jade", "Phoenix", "Sumedha"]
-types = ["Ben", "Zack", "Abhijit"]
-
-def get_path(n, places, ratings, names, types, start_pos, time_limit):
-    places.append(start_pos)
+def get_path(n, locations, ratings, names, kinds, sp, time_limit):
+    locations = np.append(locations, sp)
     n+=1
 
-    matrix = google(n, places)
+    matrix = google(n, locations)
     good = find_route(n, matrix, time_limit)
     best_route = best(good, ratings)
 
-    print("Itinerary")
-    for i in range(len(best_route)):
-        if(best_route[i]!=len(names)):
-            print(types[best_route[i]]+"\t"+names[best_route[i]])
+    print(best_route)
+    print(value(best_route, ratings))
 
+get_path(n, locations, ratings, names, kinds, sp, time_limit)
 
-get_path(n, places, ratings, names, types, start_pos, time_limit)
+"""
+changed places to locations
+changed types to kinds
+changed start_pos to sp
+changed n to n-1 in find_route()
+added float() around ratings[path[i]] in best()
+"""
