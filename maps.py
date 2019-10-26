@@ -12,27 +12,20 @@ gmaps = googlemaps.Client(key=key)
 
 now=datetime.now()
 
-place1 = "37.2753,-107.88067"
-place2 = "37.7749,-122.419416"
-place3 = "43.123, -110.1245"
-places = [place1, place2, place3]
-ratings = [4.5, 3.4, 2.9]
+def google(n, places):
+    gmaps_matrix = gmaps.distance_matrix(places, places,
+                        mode="driving",
+                        avoid="ferries",
+                        departure_time=now)
 
-n = len(places)
+    matrix = np.ndarray(dtype="double", shape=(n,n))
+    for i in range(n):
+        for j in range(n):
+            matrix[i][j] = gmaps_matrix['rows'][i]['elements'][j]['duration_in_traffic']['value']
 
-time_limit = 106000
+    return matrix
 
-gmaps_matrix = gmaps.distance_matrix(places, places,
-                    mode="driving",
-                    avoid="ferries",
-                    departure_time=now)
-
-matrix = np.ndarray(dtype="double", shape=(n,n))
-for i in range(n):
-    for j in range(n):
-        matrix[i][j] = gmaps_matrix['rows'][i]['elements'][j]['duration_in_traffic']['value']
-
-def getMat(iArr):
+def getMat(iArr, matrix):
     n = len(iArr)
     new_mat = np.ndarray(dtype="double", shape=(n,n))
     for i in range(n):
@@ -45,51 +38,77 @@ def binary(n, digits):
     binary = str("{0:b}".format(n))
     return (digits-len(binary))*"0"+binary
 
-good = []
-for i in range(1, 2**n):
-    bin = binary(i, n)
-    iArr = []
-    posArr = []
-    for j in range(n):
-        if(bin[j]=='1'):
-            iArr.append(j)
-            posArr.append(places[j])
+def find_route(n, matrix, time_limit):
+    good = []
+    for i in range(1, 2**n):
+        bin = binary(i, n)
+        iArr = []
+        posArr = []
+        for j in range(n):
+            if(bin[j]=='1'):
+                iArr.append(j)
+                posArr.append(places[j])
 
-    if(len(iArr)>1):
-        new_mat = getMat(iArr)
-        dist_list = []
-        for j in range(len(iArr)):
-            for k in range(j+1, len(iArr)):
-                dist_list.append((j, k, new_mat[j][k]))
+        if(len(iArr)>1):
+            new_mat = getMat(iArr, matrix)
+            dist_list = []
+            for j in range(len(iArr)):
+                for k in range(j+1, len(iArr)):
+                    dist_list.append((j, k, new_mat[j][k]))
 
-        fitness_dists = mlrose.TravellingSales(distances=dist_list)
-        problem_fit = mlrose.TSPOpt(length=len(iArr), fitness_fn=fitness_dists, maximize=False)
-        best_state, best_fitness = mlrose.genetic_alg(problem_fit, random_state=2)
+            fitness_dists = mlrose.TravellingSales(distances=dist_list)
+            problem_fit = mlrose.TSPOpt(length=len(iArr), fitness_fn=fitness_dists, maximize=False)
+            best_state, best_fitness = mlrose.genetic_alg(problem_fit, random_state=2)
 
-        best_state_fr = []
-        for k in range(len(iArr)):
-            best_state_fr.append(iArr[best_state[k]])
+            best_state_fr = []
+            for k in range(len(iArr)):
+                best_state_fr.append(iArr[best_state[k]])
 
-        if(best_fitness<time_limit):
-            good.append(best_state_fr)
+            if(best_fitness<time_limit):
+                good.append(best_state_fr)
 
-def value(path):
+    return good
+
+def value(path, ratings):
     n = len(path)
     sum = 0
     for i in range(n):
         sum+=ratings[path[i]]
     return sum/n**(0.5)
 
-values = []
-for i in range(len(good)):
-    values.append(value(good[i]))
+def best(good, ratings):
+    values = []
+    for i in range(len(good)):
+        values.append(value(good[i], ratings))
 
-max = 0
-loc = -1
+    max = 0
+    loc = -1
 
-for i in range(len(good)):
-    if(values[i]>max):
-        max = values[i]
-        loc = i
+    for i in range(len(good)):
+        if(values[i]>max):
+            max = values[i]
+            loc = i
 
-print(good[i])
+    return good[i]
+
+place1 = "37.2753,-107.88067"
+place2 = "37.7749,-122.419416"
+place3 = "43.123,-110.1245"
+places = [place1, place2, place3]
+ratings = [4.5, 3.4, 2.9]
+
+n = len(places)
+
+time_limit = 106000
+
+names = []
+types = []
+
+
+def get_path(n, places, ratings, names, types, time_limit):
+    matrix = google(n, places)
+    good = find_route(n, matrix, time_limit)
+    best_route = best(good, ratings)
+    print(best_route)
+
+get_path(n, places, ratings, names, types, time_limit)
