@@ -15,6 +15,9 @@ import matplotlib.pyplot as plt
 KEY_file = open('key.txt', 'r')
 KEY=KEY_file.readlines()[0]
 
+city = "New York City"
+time_limit = 1800
+
 class Gsearch_python:
 
     def __init__(self, name_search):
@@ -40,7 +43,6 @@ def places(city):
 
     for i in range(len(res)):
         if re.search("https://www.tripadvisor.com/Tourism", res[i]) != None:
-            trip = i
             break
 
     URL = res[i]
@@ -52,6 +54,26 @@ def places(city):
         places.append(place.text)
 
     return places
+
+def rate(location):
+    try:
+        gs = Gsearch_python("Tripadvisor %s" % location)
+        res = gs.Gsearch()
+
+        for i in range(len(res)):
+            if re.search("https://www.tripadvisor.com/Attraction_Review", res[i]) != None:
+                break
+
+        URL = res[i]
+        r = requests.get(URL)
+        soup = BeautifulSoup(r.content, 'html5lib')
+
+        rating = float(str(soup.find_all('div', attrs={'class', 'prw_rup prw_common_bubble_rating rating'})[0]).split("alt=\"")[1].split(" ")[0])
+        reviews = int(soup.find_all('span', attrs={'class', 'reviewCount'})[0].text.split("Review")[0][:-1].replace(',',''))
+        return [rating, reviews]
+    except IndexError:
+        return [3, 1]
+
 
 def info(place):
     gmaps = googlemaps.Client(key=KEY)
@@ -74,12 +96,10 @@ def info(place):
         long = geocode_result[0]['geometry']['location']['lng']
         kind = res2['result']['types'][0]
 
-        try: rating = float('%.4g' % str(res2['result']['rating']))
-        except: rating = 4.5
+        [rating, reviews] = rate(place)
+        return lat, long, rating, reviews, kind
 
-        return lat, long, rating, kind
-
-def place_data(place, max_size = 5, offline = True):
+def place_data(place, max_size = 9, offline = True):
     if offline == True:
         mem = np.load('memory.npz')
         try: return mem[place].item()
@@ -101,14 +121,15 @@ def place_data(place, max_size = 5, offline = True):
 
         return data
 
-data = place_data('New York', offline=False)
+data = place_data(city, offline=False)
 names = list(data.keys())
 ratings = list(np.array(list(data.values()))[:, 2])
+reviews = list(np.array(list(data.values()))[:, 3])
 lats = np.array(list(data.values()), dtype=str)[:, 0]
 longs = np.array(list(data.values()), dtype=str)[:, 1]
 comma = np.full(lats.shape, ',')
 locations = list(np.core.defchararray.add(np.core.defchararray.add(lats, comma), longs))
-kinds = list(np.array(list(data.values()))[:, 3])
+kinds = list(np.array(list(data.values()))[:, 4])
 
 def get_sp(place):
     if place == 'current':
@@ -141,14 +162,14 @@ gmaps = googlemaps.Client(key=KEY)
 
 def google(n, locations):
     gmaps_matrix = gmaps.distance_matrix(locations, locations,
-                        mode="driving",
+                        mode="walking",
                         avoid="ferries",
                         departure_time=now)
 
     matrix = np.ndarray(dtype="double", shape=(n,n))
     for i in range(n):
         for j in range(n):
-            matrix[i][j] = gmaps_matrix['rows'][i]['elements'][j]['duration_in_traffic']['value']
+            matrix[i][j] = gmaps_matrix['rows'][i]['elements'][j]['duration']['value']
 
     return matrix
 
@@ -196,18 +217,18 @@ def find_route(n, matrix, locations, time_limit):
 
     return good
 
-def value(path, ratings):
+def value(path, ratings, reviews):
     n = len(path)
     sum = 0
     for i in range(n):
         if(path[i]!=len(ratings)):
-            sum+=float(ratings[path[i]])
+            sum+=float(ratings[path[i]])-(1/(float(reviews[path[i]]))**0.5)
     return sum/n**(0.5)
 
-def best(good, ratings):
+def best(good, ratings, reviews):
     values = []
     for i in range(len(good)):
-        values.append(value(good[i], ratings))
+        values.append(value(good[i], ratings, reviews))
 
     max = 0
     loc = -1
@@ -219,22 +240,17 @@ def best(good, ratings):
 
     return good[loc]
 
-n = len(locations)
-
-time_limit = 7200
-sp = get_sp('New York')
-
-def get_path(n, locations, ratings, names, kinds, sp, time_limit):
+def get_path(n, locations, ratings, reviews, names, kinds, sp, time_limit):
     locations = np.append(locations, sp)
     n+=1
 
     matrix = google(n, locations)
-    good = find_route(n, matrix, locations, time_limit)
-    best_route = best(good, ratings)
+    good = find_route_bad(n, matrix, locations, time_limit)
+    best_route = best(good, ratings, reviews)
 
 
     print(best_route)
-    print(value(best_route, ratings))
+    print(value(best_route, ratings, reviews))
 
     for i in range(len(best_route)):
         if(best_route[i]!=n-1):
@@ -243,18 +259,7 @@ def get_path(n, locations, ratings, names, kinds, sp, time_limit):
 
     return best_route
 
-print(n)
-route = get_path(n, locations, ratings, names, kinds, sp, time_limit)
+n = len(locations)
+sp = get_sp(city)
 
-data_small = {}
-
-for i in range(5):
-    data_small[list(data.keys())[i]] = list(data.values())[i]
-
-names = list(data_small.keys())
-ratings = np.array(list(data_small.values()))[:, 2]
-lats = np.array(list(data_small.values()), dtype=str)[:, 0]
-longs = np.array(list(data_small.values()), dtype=str)[:, 1]
-comma = np.full(lats.shape, ',')
-locations = np.core.defchararray.add(np.core.defchararray.add(lats, comma), longs)
-kinds = np.array(list(data_small.values()))[:, 3]
+route = get_path(n, locations, ratings, reviews, names, kinds, sp, time_limit)
