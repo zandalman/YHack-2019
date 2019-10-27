@@ -15,8 +15,6 @@ import matplotlib.pyplot as plt
 KEY_file = open('key.txt', 'r')
 KEY=KEY_file.readlines()[0]
 
-city = "New York City"
-time_limit = 1800
 
 class Gsearch_python:
 
@@ -121,16 +119,6 @@ def place_data(place, max_size = 9, offline = True):
 
         return data
 
-data = place_data(city, offline=False)
-names = list(data.keys())
-ratings = list(np.array(list(data.values()))[:, 2])
-reviews = list(np.array(list(data.values()))[:, 3])
-lats = np.array(list(data.values()), dtype=str)[:, 0]
-longs = np.array(list(data.values()), dtype=str)[:, 1]
-comma = np.full(lats.shape, ',')
-locations = list(np.core.defchararray.add(np.core.defchararray.add(lats, comma), longs))
-kinds = list(np.array(list(data.values()))[:, 4])
-
 def get_sp(place):
     if place == 'current':
         g = geocoder.ip('me')
@@ -157,10 +145,11 @@ def pic(place):
     img = Image(filename=paths[0][city + ' ' + place][0])
     return img
 
-now=datetime.now()
-gmaps = googlemaps.Client(key=KEY)
 
 def google(n, locations):
+    gmaps = googlemaps.Client(key=KEY)
+    now=datetime.now()
+
     gmaps_matrix = gmaps.distance_matrix(locations, locations,
                         mode="walking",
                         avoid="ferries",
@@ -245,7 +234,7 @@ def get_path(n, locations, ratings, reviews, names, kinds, sp, time_limit):
     n+=1
 
     matrix = google(n, locations)
-    good = find_route_bad(n, matrix, locations, time_limit)
+    good = find_route(n, matrix, locations, time_limit)
     best_route = best(good, ratings, reviews)
 
 
@@ -259,7 +248,24 @@ def get_path(n, locations, ratings, reviews, names, kinds, sp, time_limit):
 
     return best_route
 
-n = len(locations)
-sp = get_sp(city)
+def main(city, time_limit):
+    data = place_data(city, offline=False)
+    names = list(data.keys())
+    ratings = list(np.array(list(data.values()))[:, 2])
+    reviews = list(np.array(list(data.values()))[:, 3])
+    lats = np.array(list(data.values()), dtype=str)[:, 0]
+    longs = np.array(list(data.values()), dtype=str)[:, 1]
+    comma = np.full(lats.shape, ',')
+    locations = list(np.core.defchararray.add(np.core.defchararray.add(lats, comma), longs))
+    kinds = list(np.array(list(data.values()))[:, 4])
 
-route = get_path(n, locations, ratings, reviews, names, kinds, sp, time_limit)
+    gmaps = googlemaps.Client(key=KEY)
+
+    n = len(locations)
+    sp = get_sp(city)
+
+    route = get_path(n, locations, ratings, reviews, names, kinds, sp, time_limit)
+
+city = "Chicago"
+time_limit = 6000
+main(city, time_limit)
