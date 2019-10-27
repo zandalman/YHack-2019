@@ -99,17 +99,33 @@
         <img src="./images/flowchart.svg", alt="Flow Chart" class="Mason">
         <hr class="m-4">
         <p> </p> <p> </p>
-        <b class="mb-1">Step 1: The Google Search API allows us to extract tourist destinations from Trip Advisor.</b>
+        <b class="mb-1">Step 1: The user tells us where they would like to explore and how much time they have to do it.</b>
         <p> </p>
-        <img src="./images/boston hacking.png">
+        <b class="mb-1">Step 2: The Google Search API allows us to extract tourist destinations from Trip Advisor.</b>
         <p> </p>
-        <img src="./images/china hacking.png">
+        <b class="mb-1">Step 3: We use the Google Maps API to filter the data based on location type. We also augment the data with latitude, longitude, photos, and ratings.</b>
         <p> </p>
-        <b class="mb-1">Step 2: Map</b>
+        <b class="mb-1">Step 4: We create an ajacency matrix with all of our potential locations. We model the problem as a Travelling Salesmen Problem and solve using the mlrose Python library.</b>
         <p> </p>
-        <img src="./images/boston.png">
+        <b class="mb-1">Step 5: We output the optimal path to the user given the time constrainst.</b>
         <p> </p>
-        <img src="./images/china.png">
+        <h3 class="mb-0">Sample Results</h3>
+
+        <div class="column" style="margin-top: 10px;">
+          <b class="mb-1">Boston</b>
+          <img src="./images/boston hacking.png" style="max-width: 90%; margin-top: 20px;">
+        </div>
+        <div class="column" style="margin-top: 10px;">
+          <img src="./images/boston.png" style="max-width: 90%; margin-top: 20px;">
+        </div>
+        <p> </p>
+        <div class="column" style="margin-top: 10px;">
+          <b class="mb-1" style="margin-top: 200px;">Beijing</b>
+          <img src="./images/china hacking.png" style="max-width: 90%;">
+        </div>
+        <div class="column" style="margin-top: 10px;">
+          <img src="./images/china.png" style="max-width: 90%; margin-top: 30px;">
+        </div>
 
         <p> </p> <p> </p>
         <b class="mb-1"></b>
@@ -119,17 +135,7 @@
 
     <section class="p-3 p-lg-3 d-flex align-items-center" id="business">
       <div class="w-100">
-        <h2 class="mb-0">Business Overview</h2>
-        <p class="lead mb-5"></p>
-        Project Horus aims to use machine learning and natural language processing solutions to bring value to millions of consumers who struggle daily with monitoring their finances and making meaningful insight of their spending pattern. We target all audiences who struggle with managing their day-to-day finances. In addition, to promote community and address pressing societal concerns, we pledge to donate a portion of our profits to charity. To motivate our users to improve their own spending habits, users can pledge to support a non-profit, and "donate" their ad revenue for good spending habits and healthy lifestyle.
-      </div>
-    </section>
-
-    <hr class="mb-4">
-
-    <section class="p-3 p-lg-3 d-flex align-items-center" id="business">
-      <div class="w-100">
-        <h2 class="mb-0">Let's Hunt!</h2>
+        <h2 class="mb-0">Let's Explore!</h2>
         <p class="lead mb-5"></p>
         <input type="text" class="center2" id="input1" placeholder="Enter a Place" style="display: inline-block;"/>
         <p style="margin: 30px auto 0 35%; display: inline-block; font-size: 20px;">Trip time: </p>
